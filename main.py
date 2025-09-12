@@ -95,6 +95,9 @@ def easy_game():
             if board[i][j]=='':
                 empty_cells.append((i,j))
 
+    if not empty_cells:
+        return
+
     pc_choice=random.choice(empty_cells)
     row,col=pc_choice
 
@@ -109,7 +112,46 @@ def easy_game():
                        fill="white")
 
 def medium_game():
-    pass
+    empty_cells = []
+
+    for i in range(0, 3):
+        for j in range(0, 3):
+            if board[i][j] == '':
+                empty_cells.append((i, j))
+
+    if not empty_cells:
+        return
+
+    for row in board:
+        if row[0]==row[1]:
+            board[row][2]='O'
+        elif row[0]==row[2]:
+            board[row][1]='O'
+        elif row[1]==row[2]:
+            board[row][0]='O'
+
+    for col in range(3):
+         if board[0][col] == board[1][col]:
+             board[2][col]='O'
+         elif board[0][col] == board[2][col]:
+                board[1][col]='O'
+         elif board[2][col] == board[1][col]:
+             board[0][col]='O'
+
+    if board[0][0]==board[1][1]=='O':
+        board[2][2]='O'
+    elif board[0][0]==board[2][2]=='O':
+        board[1][1]='O'
+    elif board[2][2]==board[1][1]=='O':
+        board[1][1]='O'
+
+
+
+
+
+
+
+
 
 def hard_game():
     pass
