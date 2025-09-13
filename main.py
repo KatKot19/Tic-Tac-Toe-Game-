@@ -2,207 +2,238 @@ import tkinter as tk
 import tkinter.messagebox as mb
 import random
 
-CELL_SIZE=150
-SIZE=CELL_SIZE*3
-board = [
-  ['', '', ''],
-  ['', '', ''],
-  ['', '', '']
-]
-
+CELL_SIZE = 150
+SIZE = CELL_SIZE * 3
+board = [['', '', ''], ['', '', ''], ['', '', '']]
 current_player = 'X'
-game_mode="easy"
+game_mode = None
 
+# ---------------- Grid ----------------
 def grid(canvas):
     canvas["background"] = "black"
-    for i in range(1,3):
-        canvas.create_line(CELL_SIZE*i, 0, CELL_SIZE*i, SIZE, fill="#99FFCC", width=4)
-    for i in range(1,3):
-        canvas.create_line(0, CELL_SIZE*i, SIZE, CELL_SIZE*i, fill="#99FFCC", width=4)
+    for i in range(1, 3):
+        canvas.create_line(CELL_SIZE * i, 0, CELL_SIZE * i, SIZE, fill="#99FFCC", width=4)
+    for i in range(1, 3):
+        canvas.create_line(0, CELL_SIZE * i, SIZE, CELL_SIZE * i, fill="#99FFCC", width=4)
 
+# ---------------- Winner ----------------
 def winner():
     for row in board:
         if row[0] == row[1] == row[2] != '':
-            return row[0]  # νικητής
-
+            return row[0]
     for col in range(3):
         if board[0][col] == board[1][col] == board[2][col] != '':
-            return board[0][col]  # νικητής
-
+            return board[0][col]
     if board[0][0] == board[1][1] == board[2][2] != '':
         return board[0][0]
     if board[0][2] == board[1][1] == board[2][0] != '':
         return board[0][2]
+    return None
 
-
-    return None  # κανένας νικητής
-
-def two_players_mode(event): #adapted to rows and columns instead of pixels
-
+# ---------------- 2 Players Mode ----------------
+def two_players_mode(event):
     global current_player
-
-    row=event.y//CELL_SIZE
-    col=event.x//CELL_SIZE
-
-    if board[row][col]=='':
-        board[row][col]=current_player
-
-        x_center=col*CELL_SIZE+CELL_SIZE/2
+    row = event.y // CELL_SIZE
+    col = event.x // CELL_SIZE
+    if board[row][col] == '':
+        board[row][col] = current_player
+        x_center = col * CELL_SIZE + CELL_SIZE / 2
         y_center = row * CELL_SIZE + CELL_SIZE / 2
-
-        canvas.create_text(x_center, y_center,
-                           text=current_player,
-                           font=("Arial", CELL_SIZE//2),
-                           fill="white")
-
+        canvas.create_text(x_center, y_center, text=current_player, font=("Arial", CELL_SIZE // 2), fill="white")
     else:
         print("Cell already taken")
+        return
 
-    print(f"click on cell:{row},{col}")
-
-    # έλεγχος νίκης
+    # Έλεγχος νίκης
     game_winner = winner()
     if game_winner:
         mb.showinfo("Game Over", f"Player {game_winner} wins!")
         canvas.unbind("<Button-1>")
         return
 
-    # έλεγχος ισοπαλίας
-    is_draw = all(board[row][col] != '' for row in range(3) for col in range(3))
+    # Έλεγχος ισοπαλίας
+    is_draw = all(board[r][c] != '' for r in range(3) for c in range(3))
     if is_draw:
         mb.showinfo("Game Over", "Draw!")
         canvas.unbind("<Button-1>")
+        return
 
     current_player = 'O' if current_player == 'X' else 'X'
 
-
+# ---------------- Restart ----------------
 def restart_game():
-    global board,current_player
+    global board, current_player
     board = [['', '', ''], ['', '', ''], ['', '', '']]
     current_player = 'X'
-    canvas.delete("all")  # καθαρίζει όλα τα σχέδια
-    grid(canvas)  # ξανασχεδιάζει το grid
-    canvas.bind("<Button-1>", two_players_mode)  # ενεργοποιεί ξανά τα κλικ
+    canvas.delete("all")
+    grid(canvas)
+    # επαναφέρουμε το binding ανάλογα με το mode
+    if game_mode == "2players":
+        canvas.bind("<Button-1>", two_players_mode)
+    else:
+        canvas.bind("<Button-1>", player_vs_pc)
 
+# ---------------- Minimax ----------------
+def minimax(is_maximizing):
+    empty_cells = [(i, j) for i in range(3) for j in range(3) if board[i][j] == '']
+    result = winner()
+    if result == 'O':
+        return 1
+    elif result == 'X':
+        return -1
+    elif not empty_cells:
+        return 0
 
+    if is_maximizing:
+        best_score = -float("inf")
+        for (i, j) in empty_cells:
+            board[i][j] = 'O'
+            score = minimax(False)
+            board[i][j] = ''
+            best_score = max(best_score, score)
+        return best_score
+    else:
+        best_score = float("inf")
+        for (i, j) in empty_cells:
+            board[i][j] = 'X'
+            score = minimax(True)
+            board[i][j] = ''
+            best_score = min(best_score, score)
+        return best_score
 
+# ---------------- Easy / Medium / Hard ----------------
 def easy_game():
-
-    empty_cells=[]
-
-    for i in range(0,3):
-        for j in range(0,3):
-            if board[i][j]=='':
-                empty_cells.append((i,j))
-
+    empty_cells = [(i, j) for i in range(3) for j in range(3) if board[i][j] == '']
     if not empty_cells:
         return
-
-    pc_choice=random.choice(empty_cells)
-    row,col=pc_choice
-
-    board[row][col]='O'
-
+    row, col = random.choice(empty_cells)
+    board[row][col] = 'O'
     x_center = col * CELL_SIZE + CELL_SIZE / 2
     y_center = row * CELL_SIZE + CELL_SIZE / 2
-
-    canvas.create_text(x_center, y_center,
-                       text='O',
-                       font=("Arial", CELL_SIZE // 2),
-                       fill="white")
+    canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="white")
 
 def medium_game():
-    empty_cells = []
-
-    for i in range(0, 3):
-        for j in range(0, 3):
-            if board[i][j] == '':
-                empty_cells.append((i, j))
-
+    empty_cells = [(i, j) for i in range(3) for j in range(3) if board[i][j] == '']
     if not empty_cells:
         return
-
-    for row in board:
-        if row[0]==row[1]:
-            board[row][2]='O'
-        elif row[0]==row[2]:
-            board[row][1]='O'
-        elif row[1]==row[2]:
-            board[row][0]='O'
-
-    for col in range(3):
-         if board[0][col] == board[1][col]:
-             board[2][col]='O'
-         elif board[0][col] == board[2][col]:
-                board[1][col]='O'
-         elif board[2][col] == board[1][col]:
-             board[0][col]='O'
-
-    if board[0][0]==board[1][1]=='O':
-        board[2][2]='O'
-    elif board[0][0]==board[2][2]=='O':
-        board[1][1]='O'
-    elif board[2][2]==board[1][1]=='O':
-        board[1][1]='O'
-
-
-
-
-
-
-
-
+    for row, col in empty_cells:
+        board[row][col] = 'O'
+        if winner() == 'O':
+            x_center = col * CELL_SIZE + CELL_SIZE / 2
+            y_center = row * CELL_SIZE + CELL_SIZE / 2
+            canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="white")
+            return
+        board[row][col] = ''
+    for row, col in empty_cells:
+        board[row][col] = 'X'
+        if winner() == 'X':
+            board[row][col] = 'O'
+            x_center = col * CELL_SIZE + CELL_SIZE / 2
+            y_center = row * CELL_SIZE + CELL_SIZE / 2
+            canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="white")
+            return
+        board[row][col] = ''
+    row, col = random.choice(empty_cells)
+    board[row][col] = 'O'
+    x_center = col * CELL_SIZE + CELL_SIZE / 2
+    y_center = row * CELL_SIZE + CELL_SIZE / 2
+    canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="white")
 
 def hard_game():
-    pass
-
-
-def player_vs_pc(event):
-    player='X'
-    pc='O'
-    row = event.y // CELL_SIZE
-    col = event.x // CELL_SIZE
-
-    if board[row][col]=='':
-        board[row][col]=player
+    empty_cells = [(i, j) for i in range(3) for j in range(3) if board[i][j] == '']
+    best_score = -float("inf")
+    move = None
+    for i, j in empty_cells:
+        board[i][j] = 'O'
+        score = minimax(False)
+        board[i][j] = ''
+        if score > best_score:
+            best_score = score
+            move = (i, j)
+    if move:
+        row, col = move
+        board[row][col] = 'O'
         x_center = col * CELL_SIZE + CELL_SIZE / 2
         y_center = row * CELL_SIZE + CELL_SIZE / 2
-        canvas.create_text(x_center, y_center,
-                           text=player,
-                           font=("Arial", CELL_SIZE//2),
-                           fill="white")
-    else:
+        canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="white")
+
+# ---------------- Player vs PC ----------------
+def player_vs_pc(event):
+    row = event.y // CELL_SIZE
+    col = event.x // CELL_SIZE
+    if board[row][col] != '':
         print("Cell already taken!")
         return
 
-    if game_mode=="easy":
-        easy_game()
-    elif game_mode=="medium":
-        medium_game()
+    # Παίκτης X
+    board[row][col] = 'X'
+    x_center = col * CELL_SIZE + CELL_SIZE / 2
+    y_center = row * CELL_SIZE + CELL_SIZE / 2
+    canvas.create_text(x_center, y_center, text='X', font=("Arial", CELL_SIZE // 2), fill="white")
+
+    game_winner = winner()
+    if game_winner:
+        mb.showinfo("Game Over", f"Player {game_winner} wins!")
+        canvas.unbind("<Button-1>")
+        return
+
+    is_draw = all(board[r][c] != '' for r in range(3) for c in range(3))
+    if is_draw:
+        mb.showinfo("Game Over", "Draw!")
+        canvas.unbind("<Button-1>")
+        return
+
+    # Κίνηση υπολογιστή με καθυστέρηση
+    if game_mode == "easy":
+        canvas.after(300, easy_game)
+    elif game_mode == "medium":
+        canvas.after(300, medium_game)
+    elif game_mode == "hard":
+        canvas.after(300, hard_game)
+
+    # Έλεγχος νίκης μετά τον υπολογιστή
+    def check_after_pc():
+        game_winner = winner()
+        if game_winner:
+            mb.showinfo("Game Over", f"Player {game_winner} wins!")
+            canvas.unbind("<Button-1>")
+            return
+        is_draw = all(board[r][c] != '' for r in range(3) for c in range(3))
+        if is_draw:
+            mb.showinfo("Game Over", "Draw!")
+            canvas.unbind("<Button-1>")
+    canvas.after(350, check_after_pc)
+
+# ---------------- Main Game Window ----------------
+def start_main_game(selected_mode, mode_window):
+    global game_mode, canvas
+    game_mode = selected_mode
+    mode_window.destroy()
+
+    main_window = tk.Tk()
+    main_window.title("Tic Tac Toe Game")
+
+    canvas = tk.Canvas(main_window, width=SIZE, height=SIZE)
+    canvas.pack()
+    grid(canvas)
+
+    restart_button = tk.Button(main_window, text="Restart", command=restart_game)
+    restart_button.pack(pady=10)
+
+    if game_mode == "2players":
+        canvas.bind("<Button-1>", two_players_mode)
     else:
-        hard_game()
+        canvas.bind("<Button-1>", player_vs_pc)
 
+    main_window.mainloop()
 
+# ---------------- Initial Mode Selection ----------------
+mode_window = tk.Tk()
+mode_window.title("Choose Game Mode")
+tk.Label(mode_window, text="Select Game Mode:", font=("Arial", 14)).pack(pady=10)
+tk.Button(mode_window, text="2 Players", width=15, command=lambda: start_main_game("2players", mode_window)).pack(pady=5)
+tk.Button(mode_window, text="PC Easy", width=15, command=lambda: start_main_game("easy", mode_window)).pack(pady=5)
+tk.Button(mode_window, text="PC Medium", width=15, command=lambda: start_main_game("medium", mode_window)).pack(pady=5)
+tk.Button(mode_window, text="PC Hard", width=15, command=lambda: start_main_game("hard", mode_window)).pack(pady=5)
 
-
-
-
-
-window=tk.Tk()
-window.title("Tic Tac Toe Game")
-
-canvas=tk.Canvas(window,width=SIZE,height=SIZE)
-canvas.pack()
-
-grid(canvas)
-
-canvas.bind("<Button-1>",two_players_mode)
-restart_button = tk.Button(window, text="Restart", command=restart_game)
-restart_button.pack(pady=10)
-
-
-
-
-
-
-window.mainloop()
+mode_window.mainloop()
