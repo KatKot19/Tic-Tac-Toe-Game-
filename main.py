@@ -87,18 +87,35 @@ def show_winner(winner_text):
     result_window = tk.Toplevel()
     result_window.title("Game Over")
     result_window.geometry("300x150")
-    result_window.configure(bg="#222222")  # σκούρο background
+    result_window.configure(bg="black")  # σκούρο background
+
+
+
+    # Επιλογή χρώματος ανάλογα με το αποτέλεσμα
+    if winner_text.startswith("Player X"):
+        msg_color = "#FFFF99"  # ίδιο χρώμα όπως το X στο ταμπλό
+    elif winner_text.startswith("Player O"):
+        msg_color = "#FFCCFF"  # ίδιο χρώμα όπως το O στο ταμπλό
+    else:  # Draw
+        msg_color = "white"
 
     tk.Label(result_window, text=winner_text,
              font=("Arial", 20, "bold"),
-             fg="#FFD700", bg="#222222").pack(pady=30)
+             fg=msg_color, bg="#000000").pack(pady=30)
 
-    tk.Button(result_window, text="Restart", width=12,
-              font=("Arial", 14, "bold"),
-              bg="#3E3E44", fg="#C3F51E",
-              activebackground="#ff2e63", activeforeground="white",
-              relief="raised", bd=3,
-              command=lambda: [restart_game(), result_window.destroy()]).pack(pady=10)
+    restart_btn = tk.Button(result_window,
+                            text="Restart",
+                            width=15,
+                            font=("Arial", 14, "bold"),
+                            bg="#99FFCC", fg="black",
+                            activebackground="#3E3E44",
+                            activeforeground="white",
+                            relief="raised", bd=3,
+                            command=lambda: [restart_game(), result_window.destroy()])
+    restart_btn.pack(pady=10)
+
+    # Προσθέτουμε hover effect και cursor
+    style_button(restart_btn, hover_bg="#55DD99")
 
 
 # ---------------- Minimax ----------------
