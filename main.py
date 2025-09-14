@@ -2,6 +2,8 @@ import tkinter as tk
 import tkinter.messagebox as mb
 import random
 
+from pygments.lexer import default
+
 CELL_SIZE = 150
 SIZE = CELL_SIZE * 3
 board = [['', '', ''], ['', '', ''], ['', '', '']]
@@ -39,7 +41,9 @@ def two_players_mode(event):
         board[row][col] = current_player
         x_center = col * CELL_SIZE + CELL_SIZE / 2
         y_center = row * CELL_SIZE + CELL_SIZE / 2
-        canvas.create_text(x_center, y_center, text=current_player, font=("Arial", CELL_SIZE // 2), fill="white")
+
+        color = "#FFFF99" if current_player == "X" else "#FFCCFF"
+        canvas.create_text(x_center, y_center, text=current_player, font=("Arial", CELL_SIZE // 2), fill=color)
     else:
         print("Cell already taken")
         return
@@ -47,14 +51,18 @@ def two_players_mode(event):
     # Έλεγχος νίκης
     game_winner = winner()
     if game_winner:
-        mb.showinfo("Game Over", f"Player {game_winner} wins!")
+        # mb.showinfo("Game Over", f"Player {game_winner} wins!")
+        show_winner(f"Player {game_winner} wins!")
+
         canvas.unbind("<Button-1>")
         return
 
     # Έλεγχος ισοπαλίας
     is_draw = all(board[r][c] != '' for r in range(3) for c in range(3))
     if is_draw:
-        mb.showinfo("Game Over", "Draw!")
+        # mb.showinfo("Game Over", "Draw!")
+        show_winner("Draw!")
+
         canvas.unbind("<Button-1>")
         return
 
@@ -72,6 +80,26 @@ def restart_game():
         canvas.bind("<Button-1>", two_players_mode)
     else:
         canvas.bind("<Button-1>", player_vs_pc)
+
+
+# ---------------- Result Window ----------------
+def show_winner(winner_text):
+    result_window = tk.Toplevel()
+    result_window.title("Game Over")
+    result_window.geometry("300x150")
+    result_window.configure(bg="#222222")  # σκούρο background
+
+    tk.Label(result_window, text=winner_text,
+             font=("Arial", 20, "bold"),
+             fg="#FFD700", bg="#222222").pack(pady=30)
+
+    tk.Button(result_window, text="Restart", width=12,
+              font=("Arial", 14, "bold"),
+              bg="#3E3E44", fg="#C3F51E",
+              activebackground="#ff2e63", activeforeground="white",
+              relief="raised", bd=3,
+              command=lambda: [restart_game(), result_window.destroy()]).pack(pady=10)
+
 
 # ---------------- Minimax ----------------
 def minimax(is_maximizing):
@@ -110,7 +138,12 @@ def easy_game():
     board[row][col] = 'O'
     x_center = col * CELL_SIZE + CELL_SIZE / 2
     y_center = row * CELL_SIZE + CELL_SIZE / 2
-    canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="white")
+
+    color_o = "#FFCCFF"
+
+    canvas.create_text(x_center, y_center, text='O',
+                       font=("Arial", CELL_SIZE // 2, "bold"),
+                       fill=color_o)
 
 def medium_game():
     empty_cells = [(i, j) for i in range(3) for j in range(3) if board[i][j] == '']
@@ -121,7 +154,7 @@ def medium_game():
         if winner() == 'O':
             x_center = col * CELL_SIZE + CELL_SIZE / 2
             y_center = row * CELL_SIZE + CELL_SIZE / 2
-            canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="white")
+            canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="#FFCCFF")
             return
         board[row][col] = ''
     for row, col in empty_cells:
@@ -130,14 +163,14 @@ def medium_game():
             board[row][col] = 'O'
             x_center = col * CELL_SIZE + CELL_SIZE / 2
             y_center = row * CELL_SIZE + CELL_SIZE / 2
-            canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="white")
+            canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="#FFCCFF")
             return
         board[row][col] = ''
     row, col = random.choice(empty_cells)
     board[row][col] = 'O'
     x_center = col * CELL_SIZE + CELL_SIZE / 2
     y_center = row * CELL_SIZE + CELL_SIZE / 2
-    canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="white")
+    canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="#FFCCFF")
 
 def hard_game():
     empty_cells = [(i, j) for i in range(3) for j in range(3) if board[i][j] == '']
@@ -155,7 +188,7 @@ def hard_game():
         board[row][col] = 'O'
         x_center = col * CELL_SIZE + CELL_SIZE / 2
         y_center = row * CELL_SIZE + CELL_SIZE / 2
-        canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="white")
+        canvas.create_text(x_center, y_center, text='O', font=("Arial", CELL_SIZE // 2), fill="#FFCCFF")
 
 # ---------------- Player vs PC ----------------
 def player_vs_pc(event):
@@ -169,17 +202,21 @@ def player_vs_pc(event):
     board[row][col] = 'X'
     x_center = col * CELL_SIZE + CELL_SIZE / 2
     y_center = row * CELL_SIZE + CELL_SIZE / 2
-    canvas.create_text(x_center, y_center, text='X', font=("Arial", CELL_SIZE // 2), fill="white")
+    canvas.create_text(x_center, y_center, text='X', font=("Arial", CELL_SIZE // 2), fill="#FFFF99")
 
     game_winner = winner()
     if game_winner:
-        mb.showinfo("Game Over", f"Player {game_winner} wins!")
+        # mb.showinfo("Game Over", f"Player {game_winner} wins!")
+        show_winner(f"Player {game_winner} wins!")
+
         canvas.unbind("<Button-1>")
         return
 
     is_draw = all(board[r][c] != '' for r in range(3) for c in range(3))
     if is_draw:
-        mb.showinfo("Game Over", "Draw!")
+        # mb.showinfo("Game Over", "Draw!")
+        show_winner("Draw!")
+
         canvas.unbind("<Button-1>")
         return
 
@@ -195,12 +232,16 @@ def player_vs_pc(event):
     def check_after_pc():
         game_winner = winner()
         if game_winner:
-            mb.showinfo("Game Over", f"Player {game_winner} wins!")
+            # mb.showinfo("Game Over", f"Player {game_winner} wins!")
+            show_winner(f"Player {game_winner} wins!")
+
             canvas.unbind("<Button-1>")
             return
         is_draw = all(board[r][c] != '' for r in range(3) for c in range(3))
         if is_draw:
-            mb.showinfo("Game Over", "Draw!")
+            # mb.showinfo("Game Over", "Draw!")
+            show_winner("Draw!")
+
             canvas.unbind("<Button-1>")
     canvas.after(350, check_after_pc)
 
@@ -217,7 +258,18 @@ def start_main_game(selected_mode, mode_window):
     canvas.pack()
     grid(canvas)
 
-    restart_button = tk.Button(main_window, text="Restart", command=restart_game)
+    restart_button = tk.Button(main_window,
+                    text="Restart",
+                    width=15,
+                    font=("Arial",14,"bold"),
+                    bg="#99FFCC",
+                    fg="black",
+                    activebackground="#3E3E44",
+                    activeforeground="white",
+                    relief="raised", bd=3,
+                    command=restart_game
+                               )
+
     restart_button.pack(pady=10)
 
     if game_mode == "2players":
@@ -227,13 +279,99 @@ def start_main_game(selected_mode, mode_window):
 
     main_window.mainloop()
 
+def add_hover_effect(button, hover_bg="black"):
+    default_bg=button['bg']
+    def on_enter(e):
+        e.widget['background'] = hover_bg
+
+    def on_leave(e):
+        e.widget['background'] = default_bg
+
+    button.bind("<Enter>", on_enter)
+    button.bind("<Leave>", on_leave)
+
+def style_button(button, hover_bg="black"):
+    """
+    Προσθέτει hover effect και pointer cursor σε ένα κουμπί.
+    - hover_bg: χρώμα όταν περνάει το ποντίκι
+    Το αρχικό background παίρνεται αυτόματα από το button.
+    """
+    default_bg = button['bg']  # παίρνει το αρχικό χρώμα
+
+    # hover effect
+    def on_enter(e):
+        e.widget['background'] = hover_bg
+
+    def on_leave(e):
+        e.widget['background'] = default_bg
+
+    button.bind("<Enter>", on_enter)
+    button.bind("<Leave>", on_leave)
+
+    # pointer cursor
+    button.config(cursor="hand2")
+
+
+
 # ---------------- Initial Mode Selection ----------------
 mode_window = tk.Tk()
 mode_window.title("Choose Game Mode")
-tk.Label(mode_window, text="Select Game Mode:", font=("Arial", 14)).pack(pady=10)
-tk.Button(mode_window, text="2 Players", width=15, command=lambda: start_main_game("2players", mode_window)).pack(pady=5)
-tk.Button(mode_window, text="PC Easy", width=15, command=lambda: start_main_game("easy", mode_window)).pack(pady=5)
-tk.Button(mode_window, text="PC Medium", width=15, command=lambda: start_main_game("medium", mode_window)).pack(pady=5)
-tk.Button(mode_window, text="PC Hard", width=15, command=lambda: start_main_game("hard", mode_window)).pack(pady=5)
+mode_window.configure(bg="#070901")
+tk.Label(mode_window, text="Select Game Mode:", font=("Arial", 18,"bold"),fg="black",bg="#783AF5").pack(pady=20,padx=20)
+
+btn_2players=tk.Button(mode_window,
+          text="2 Players",
+          width=15,
+          command=lambda: start_main_game("2players", mode_window),
+          bg = "#3E3E44", fg = "#C3F51E",
+          font = ("Arial", 14, "bold"),
+          activebackground = "#ff2e63", activeforeground = "white",
+          relief = "raised",
+          bd = 3,
+          )
+btn_2players.pack(pady=10)
+add_hover_effect(btn_2players)
+style_button(btn_2players)
+
+
+btn_easy=tk.Button(mode_window,
+          text="Easy",
+          width=15,
+          command=lambda: start_main_game("easy", mode_window),
+          bg="#3E3E44", fg="#C3F51E",
+          font=("Arial", 14, "bold"),
+          activebackground="#ff2e63", activeforeground="white",
+          relief="raised", bd=3
+          )
+btn_easy.pack(pady=10)
+add_hover_effect(btn_easy)
+style_button(btn_easy)
+
+btn_medium=tk.Button(mode_window,
+          text="Medium",
+          width=15,
+          command=lambda: start_main_game("medium", mode_window),
+          bg="#3E3E44", fg="#C3F51E",
+          font=("Arial", 14, "bold"),
+          activebackground="#ff2e63", activeforeground="white",
+          relief="raised", bd=3
+          )
+btn_medium.pack(pady=10)
+add_hover_effect(btn_medium)
+style_button(btn_medium)
+
+btn_hard=tk.Button(mode_window,
+          text="Hard",
+          width=15,
+          command=lambda: start_main_game("hard", mode_window),
+          bg="#3E3E44", fg="#C3F51E",
+          font=("Arial", 14, "bold"),
+          activebackground="#ff2e63", activeforeground="white",
+          relief="raised", bd=3
+          )
+btn_hard.pack(pady=10)
+add_hover_effect(btn_hard)
+style_button(btn_hard)
+
 
 mode_window.mainloop()
